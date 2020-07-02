@@ -2,8 +2,36 @@ sudo: required
 dist: trusty
 language: java
 jdk:
-  - oraclejdk8
+- oraclejdk8
 addons:
-  # Fix OpenJDK builds
-  # https://github.com/travis-ci/travis-ci/issues/5227
   hostname: localhost
+install:
+- mkdir -p /tmp/willena/
+- openssl aes-256-cbc -K $encrypted_3810ea4c6913_key -iv $encrypted_3810ea4c6913_iv -in /home/travis/build/Willena/syslog4j-graylog2/.travis/sign.gpg.enc -out /tmp/willena/private.key -d
+- gpg --import /tmp/willena/private.key
+- rm /tmp/willena/private.key
+before_install:
+- sudo apt-get update
+- sudo apt-get install -y xmlstarlet  gnupg
+before_deploy:
+- echo "Now deploying things !"
+- git config --local user.name "Villena Guillaume"
+- git config --local user.email "guiguivil@gmail.com"
+- source VERSION
+- mvn package deploy -DperformRelease=true --settings settings.xml
+deploy:
+  provider: releases
+  api_key: "$GH_TOKEN"
+  overwrite: true
+  file_glob: true
+  file: 
+  - "/home/travis/build/Willena/syslog4j-graylog2/target/syslog4j-$version.jar"
+  - "/home/travis/build/Willena/syslog4j-graylog2/target/syslog4j-$version-javadoc.jar"
+  - "/home/travis/build/Willena/syslog4j-graylog2/target/syslog4j-$version-sources.jar"
+  - "/home/travis/build/Willena/syslog4j-graylog2/target/syslog4j-$version.jar.asc"
+  - "/home/travis/build/Willena/syslog4j-graylog2/target/syslog4j-$version-javadoc.jar.asc"
+  - "/home/travis/build/Willena/syslog4j-graylog2/target/syslog4j-$version-sources.jar.asc"
+  skip_cleanup: true
+  name: Syslog4j-$version
+  on:
+    tags: true
