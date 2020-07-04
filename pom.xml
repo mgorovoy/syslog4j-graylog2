@@ -6,9 +6,9 @@
         <version>9</version>
     </parent>
 
-    <groupId>org.graylog2</groupId>
+    <groupId>io.github.willena</groupId>
     <artifactId>syslog4j</artifactId>
-    <version>0.9.61-SNAPSHOT</version>
+    <version>0.9.61</version>
     <packaging>jar</packaging>
 
     <name>syslog4j-graylog2</name>
