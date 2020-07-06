@@ -161,23 +161,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19.1</version>
             </plugin>
-        </plugins>
-    </build>
 
-    <profiles>
-        <profile>
-            <id>java8-disable-strict-javadoc</id>
-            <activation>
-                <jdk>[1.8,)</jdk>
-            </activation>
-            <properties>
-                <additionalparam>-Xdoclint:none</additionalparam>
-            </properties>
-        </profile>
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
@@ -215,11 +199,15 @@
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
+	   	               <configuration>
+                                  <additionalparam>-Xdoclint:none</additionalparam>
+                                  <additionalOptions>-Xdoclint:none</additionalOptions>
+                                  <additionalJOption>-Xdoclint:none</additionalJOption>
+				  <failOnError>false</failOnError>
+		               </configuration>
                             </execution>
                         </executions>
                     </plugin>
                 </plugins>
-            </build>
-        </profile>
-    </profiles>
+</build>
 </project>
