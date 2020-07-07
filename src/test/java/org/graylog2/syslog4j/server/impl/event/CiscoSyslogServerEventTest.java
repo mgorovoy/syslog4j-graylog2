@@ -12,7 +12,6 @@ import static java.time.ZoneOffset.UTC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
-
 public class CiscoSyslogServerEventTest {
     private static final InetAddress INET_ADDR = new InetSocketAddress(514).getAddress();
     private static final ZoneId CET = ZoneId.of("CET");
@@ -113,7 +112,7 @@ public class CiscoSyslogServerEventTest {
         final CiscoSyslogServerEvent event = buildEvent(message);
 
         assertThat(event.getDate())
-                .isInThePast()
+                .isBeforeOrEqualsTo(new Date())
                 .isInSameMinuteWindowAs(new Date());
         assertThat(event.getFacility()).isEqualTo(20);
         assertThat(event.getLevel()).isEqualTo(6);

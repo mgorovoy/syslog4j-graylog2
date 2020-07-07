@@ -42,10 +42,6 @@ public final class Syslog implements SyslogConstants {
 
     protected static final Map instances = new Hashtable();
 
-    static {
-        initialize();
-    }
-
     /**
      * Syslog is a singleton.
      */
