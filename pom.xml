@@ -9,7 +9,7 @@
 
     <groupId>io.github.willena</groupId>
     <artifactId>syslog4j</artifactId>
-    <version>0.9.61</version>
+    <version>0.9.62</version>
     <packaging>jar</packaging>
 
     <name>syslog4j-graylog2</name>
@@ -204,7 +204,6 @@
                         </goals>
                         <configuration>
                             <additionalparam>-Xdoclint:none</additionalparam>
-                            <additionalOptions>-Xdoclint:none</additionalOptions>
                             <additionalJOption>-Xdoclint:none</additionalJOption>
                             <failOnError>false</failOnError>
                         </configuration>

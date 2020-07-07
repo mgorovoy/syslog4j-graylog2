@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class UnixSyslogTest {
+
     @Test
     public void writeUsesCorrectSyslogPriority() throws Exception {
         final UnixSyslog.CLibrary mockLibrary = mock(UnixSyslog.CLibrary.class);

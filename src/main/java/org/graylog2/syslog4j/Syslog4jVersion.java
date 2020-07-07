@@ -12,5 +12,5 @@ package org.graylog2.syslog4j;
  * @version $Id: Syslog4jVersion.java,v 1.2 2008/10/28 01:07:06 cvs Exp $
  */
 public final class Syslog4jVersion {
-    public static final String VERSION = "Syslog4j-graylog2 0.9.61 kroepke";
+    public static final String VERSION = "Syslog4j-graylog2 0.9.62 kroepke";
 }

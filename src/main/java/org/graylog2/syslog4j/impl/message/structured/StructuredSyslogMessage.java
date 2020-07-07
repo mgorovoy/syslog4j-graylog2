@@ -53,7 +53,7 @@ public class StructuredSyslogMessage extends AbstractSyslogMessage implements St
      * <p>
      * http://tools.ietf.org/html/draft-ietf-syslog-protocol-23#section-6
      * </p>
-     *
+     * <p>
      * The Map must be a String -> (Map of String -> String), which encompasses
      * the STRUCTURED-DATA field described in above document.
      *
@@ -70,6 +70,7 @@ public class StructuredSyslogMessage extends AbstractSyslogMessage implements St
         this.procId = procId;
         this.structuredData = structuredData;
         this.message = message;
+
     }
 
     /**
@@ -85,7 +86,7 @@ public class StructuredSyslogMessage extends AbstractSyslogMessage implements St
         return syslogMessage;
     }
 
-    private void  deserialize(final String stringMessage) {
+    private void deserialize(final String stringMessage) {
 
         // Check if the RFC5424 MSGID and STRUCTURED-DATA fields are empty.
         // This avoids throwing an exception and also strips the "- - " from the message.
@@ -96,9 +97,9 @@ public class StructuredSyslogMessage extends AbstractSyslogMessage implements St
         }
 
         int start = stringMessage.indexOf('[');
-        int end = -1;  
+        int end = -1;
 
-         // Check correct format
+        // Check correct format
         if (start <= 0)
             throw new IllegalArgumentException("Invalid Syslog string format: " + stringMessage);
 
@@ -116,14 +117,14 @@ public class StructuredSyslogMessage extends AbstractSyslogMessage implements St
         this.messageId = SyslogConstants.STRUCTURED_DATA_NILVALUE.equals(tokens[0]) ? null : tokens[0];
 
         //STRUCTURED_DATA
-        if (stringMessage.contains(SyslogConstants.STRUCTURED_DATA_EMPTY_VALUE)){
+        if (stringMessage.contains(SyslogConstants.STRUCTURED_DATA_EMPTY_VALUE)) {
             this.structuredData = Collections.emptyMap();
-            end=stringMessage.indexOf(SyslogConstants.STRUCTURED_DATA_EMPTY_VALUE)+4;
+            end = stringMessage.indexOf(SyslogConstants.STRUCTURED_DATA_EMPTY_VALUE) + SyslogConstants.STRUCTURED_DATA_EMPTY_VALUE_LENGTH - 1;
         } else {
 
             final Map<String, Map<String, String>> structuredDataMap = new HashMap<String, Map<String, String>>();
 
-            while(start < stringMessage.length() && matchChar(stringMessage, start, '[') == start) {
+            while (start < stringMessage.length() && matchChar(stringMessage, start, '[') == start) {
                 Preconditions.checkArgument(stringMessage.charAt(start) == '[', "Invalid structured data in syslog message '%s'", stringMessage);
                 end = matchChar(stringMessage, start, ']');
                 Preconditions.checkArgument(end != -1 && stringMessage.charAt(end) == ']', "Invalid structured data in syslog message '%s'", stringMessage);
@@ -144,7 +145,7 @@ public class StructuredSyslogMessage extends AbstractSyslogMessage implements St
 
                         // Look for the end of the value. It needs to be terminated by "
                         final int valueEnd = matchChar(stringMessage, equalsIndex + 2, '"');
-                        Preconditions.checkArgument(valueEnd !=  -1 && stringMessage.charAt(valueEnd) == '"', "Invalid structured data in syslog message '%s'", stringMessage);
+                        Preconditions.checkArgument(valueEnd != -1 && stringMessage.charAt(valueEnd) == '"', "Invalid structured data in syslog message '%s'", stringMessage);
 
                         keyMap.put(stringMessage.substring(start, equalsIndex), unescape(stringMessage.substring(equalsIndex + 2, valueEnd)));
                         start = valueEnd + 1;
@@ -157,7 +158,7 @@ public class StructuredSyslogMessage extends AbstractSyslogMessage implements St
         }
 
         //MESSAGE
-        if ((end + 2) <= stringMessage.length()){
+        if ((end + 2) <= stringMessage.length()) {
             this.message = stringMessage.substring(end + 2);
         } else {
             this.message = "";
@@ -205,8 +206,7 @@ public class StructuredSyslogMessage extends AbstractSyslogMessage implements St
         return this.message;
     }
 
-    public String getProcId()
-    {
+    public String getProcId() {
         return procId;
     }
 
@@ -230,15 +230,16 @@ public class StructuredSyslogMessage extends AbstractSyslogMessage implements St
         sb.append(StructuredSyslogMessage.nilProtect(getMessageId()));
         sb.append(' ');
 
-        if (getStructuredData() == null || getStructuredData().size() == 0) {
+
+        if (getStructuredData() == null ) {
+            sb.append(SyslogConstants.STRUCTURED_DATA_NILVALUE);
+        } else if (getStructuredData().size() == 0) {
             // This is not desired, but rsyslogd does not store version 1 syslog
-            // message correctly if
-            // there is no
-            // structured data present
+            // message correctly if there is no structured data present
             sb.append(SyslogConstants.STRUCTURED_DATA_EMPTY_VALUE);
         } else {
             Set<Map.Entry<String, Map<String, String>>> sdEntrySet = getStructuredData().entrySet();
-            for (Iterator<Map.Entry<String, Map<String, String>>> it = sdEntrySet.iterator(); it.hasNext();) {
+            for (Iterator<Map.Entry<String, Map<String, String>>> it = sdEntrySet.iterator(); it.hasNext(); ) {
                 final Map.Entry<String, Map<String, String>> sdElement = it.next();
                 final String sdId = sdElement.getKey();
 
@@ -252,7 +253,7 @@ public class StructuredSyslogMessage extends AbstractSyslogMessage implements St
 
                 if (sdParams != null) {
                     Set<Map.Entry<String, String>> entrySet = sdParams.entrySet();
-                    for (Iterator<Map.Entry<String, String>> it2 = entrySet.iterator(); it2.hasNext();) {
+                    for (Iterator<Map.Entry<String, String>> it2 = entrySet.iterator(); it2.hasNext(); ) {
                         Map.Entry<String, String> entry = it2.next();
                         final String paramName = entry.getKey();
                         final String paramValue = entry.getValue();
@@ -318,10 +319,9 @@ public class StructuredSyslogMessage extends AbstractSyslogMessage implements St
         return value;
     }
 
-    public static int matchChar(final String data, final int start, final char ... matchChars)
-    {
+    public static int matchChar(final String data, final int start, final char... matchChars) {
         int ptr = start;
-        for(;;) {
+        for (; ; ) {
             if (ptr >= data.length()) {
                 return -1;
             }
@@ -345,8 +345,7 @@ public class StructuredSyslogMessage extends AbstractSyslogMessage implements St
         }
     }
 
-    private String unescape(final String str)
-    {
+    private String unescape(final String str) {
         if (str.indexOf('\\') == -1) {
             return str;
         }
