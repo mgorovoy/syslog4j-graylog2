@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.graylog2.syslog4j.SyslogCharSetIF;
 import org.graylog2.syslog4j.SyslogRuntimeException;
@@ -17,6 +18,8 @@ import org.graylog2.syslog4j.server.SyslogServerEventIF;
 import org.graylog2.syslog4j.server.SyslogServerIF;
 import org.graylog2.syslog4j.server.SyslogServerSessionEventHandlerIF;
 import org.graylog2.syslog4j.server.SyslogServerSessionlessEventHandlerIF;
+import org.graylog2.syslog4j.server.impl.event.CiscoSyslogServerEvent;
+import org.graylog2.syslog4j.server.impl.event.FortiGateSyslogEvent;
 import org.graylog2.syslog4j.server.impl.event.SyslogServerEvent;
 import org.graylog2.syslog4j.server.impl.event.structured.StructuredSyslogServerEvent;
 import org.graylog2.syslog4j.util.SyslogUtility;
@@ -34,7 +37,7 @@ import org.graylog2.syslog4j.util.SyslogUtility;
 public abstract class AbstractSyslogServer implements SyslogServerIF {
     public static class Sessions extends HashMap {
         private static final long serialVersionUID = -4438949276263772580L;
-
+        
         public static final Object syncObject = new Object();
 
         public void addSocket(Socket socket) {
@@ -95,6 +98,10 @@ public abstract class AbstractSyslogServer implements SyslogServerIF {
         }
     }
 
+	private static final Pattern	RFC5424_REGEX		= Pattern.compile("^<[0-9]{1,3}>[0-9]+\\s");
+	private static final Pattern	CISCO_REGEX			= Pattern.compile("^<[0-9]{1,3}>[0-9]*:");
+	private static final Pattern	FORTI_REGEX			= Pattern.compile("^<[0-9]{1,3}>date=");
+
     protected String syslogProtocol = null;
     protected SyslogServerConfigIF syslogServerConfig = null;
     protected Thread thread = null;
@@ -138,33 +145,24 @@ public abstract class AbstractSyslogServer implements SyslogServerIF {
     }
 
     protected static boolean isStructuredMessage(SyslogCharSetIF syslogCharSet, String receiveData) {
-        int idx = receiveData.indexOf('>');
+		// Structured Syslog messages have a VERSION number field after <priority> followed by SPACE character
+		return RFC5424_REGEX.matcher(receiveData).find();
+    }
 
-        if (idx != -1) {
-            // If there's a numerical VERSION field after the <priority>, return true.
-            if (receiveData.length() > idx + 1 && Character.isDigit(receiveData.charAt(idx + 1))) {
-                return true;
-            }
-        }
+    protected static boolean isCiscoMessage(SyslogCharSetIF syslogCharSet, String receiveData) {
+		// Cisco Syslog messages have an optional SERIAL number field after <priority> followed by COLON character
+		return CISCO_REGEX.matcher(receiveData).find();
+    }
 
-        return false;
+    protected static boolean isFortiGateMessage(SyslogCharSetIF syslogCharSet, String receiveData) {
+		// FortiGate Syslog messages have 'date=' after <priority>
+		return FORTI_REGEX.matcher(receiveData).find();
     }
 
     protected static SyslogServerEventIF createEvent(SyslogServerConfigIF serverConfig, byte[] lineBytes, int lineBytesLength, InetAddress inetAddr) {
-        SyslogServerEventIF event = null;
+    	String line = SyslogUtility.newString(serverConfig, lineBytes, lineBytesLength);
 
-        if (serverConfig.isUseStructuredData() && AbstractSyslogServer.isStructuredMessage(serverConfig, lineBytes)) {
-            event = new StructuredSyslogServerEvent(lineBytes, lineBytesLength, inetAddr);
-
-            if (serverConfig.getDateTimeFormatter() != null) {
-                ((StructuredSyslogServerEvent) event).setDateTimeFormatter(serverConfig.getDateTimeFormatter());
-            }
-
-        } else {
-            event = new SyslogServerEvent(lineBytes, lineBytesLength, inetAddr);
-        }
-
-        return event;
+        return createEvent(serverConfig, line, inetAddr);
     }
 
     protected static SyslogServerEventIF createEvent(SyslogServerConfigIF serverConfig, String line, InetAddress inetAddr) {
@@ -172,6 +170,12 @@ public abstract class AbstractSyslogServer implements SyslogServerIF {
 
         if (serverConfig.isUseStructuredData() && AbstractSyslogServer.isStructuredMessage(serverConfig, line)) {
             event = new StructuredSyslogServerEvent(line, inetAddr);
+
+		} else if (AbstractSyslogServer.isCiscoMessage(serverConfig, line)) {
+            event = new CiscoSyslogServerEvent(line, inetAddr);
+
+        } else if (AbstractSyslogServer.isFortiGateMessage(serverConfig, line)) {
+            event = new FortiGateSyslogEvent(line);
 
         } else {
             event = new SyslogServerEvent(line, inetAddr);
